@@ -54,7 +54,7 @@ public class ImportSettings extends AnAction {
     }
 
     /**
-     * Constructor for dynamic menu actions
+     * Constructor for dynamic menu action
      *
      * @param text        The text to be displayed as a menu item
      * @param description The description of the menu item
@@ -183,12 +183,6 @@ public class ImportSettings extends AnAction {
         return instructionsMap;
     }
 
-    /**
-     * Finds or creates the AIAssistantCustomInstructionsStorage component in the document
-     *
-     * @param document The XML document
-     * @return The AIAssistantCustomInstructionsStorage component element
-     */
     private Element findOrCreateAiComponent(Document document) {
         // Look for existing component
         NodeList componentList = document.getElementsByTagName("component");
@@ -204,11 +198,20 @@ public class ImportSettings extends AnAction {
             }
         }
         
-        // If not found, create a new component
+        // If not found, create a new component with the correct structure
         Element rootElement = document.getDocumentElement();
         Element aiComponent = document.createElement("component");
         aiComponent.setAttribute("name", "AIAssistantCustomInstructionsStorage");
         rootElement.appendChild(aiComponent);
+        
+        // Create the instructions option
+        Element instructionsOption = document.createElement("option");
+        instructionsOption.setAttribute("name", "instructions");
+        aiComponent.appendChild(instructionsOption);
+        
+        // Create the map element
+        Element mapElement = document.createElement("map");
+        instructionsOption.appendChild(mapElement);
         
         return aiComponent;
     }
@@ -287,18 +290,44 @@ public class ImportSettings extends AnAction {
             
             if (instructionNodes.getLength() > 0) {
                 Element instructionElement = (Element) instructionNodes.item(0);
-                
-                // Update content option
-                NodeList contentOptionNodes = instructionElement.getElementsByTagName("option");
-                for (int i = 0; i < contentOptionNodes.getLength(); i++) {
-                    Element contentOption = (Element) contentOptionNodes.item(i);
-                    if (contentOption.getAttribute("name").equals("content")) {
-                        contentOption.setAttribute("value", content);
-                        return;
-                    }
+            
+            // Make sure actionId is set
+            String actionId = entryElement.getAttribute("key");
+            boolean hasActionId = false;
+            
+            // Check for actionId option
+            NodeList optionNodes = instructionElement.getElementsByTagName("option");
+            for (int i = 0; i < optionNodes.getLength(); i++) {
+                Element optionElement = (Element) optionNodes.item(i);
+                if (optionElement.getAttribute("name").equals("actionId")) {
+                    hasActionId = true;
+                    // Ensure it has the correct value
+                    optionElement.setAttribute("value", actionId);
+                } else if (optionElement.getAttribute("name").equals("content")) {
+                    // Update content value
+                    optionElement.setAttribute("value", content);
                 }
-                
-                // If content option not found, create it
+            }
+            
+            // If actionId option doesn't exist, create it
+            if (!hasActionId) {
+                Element actionIdOption = document.createElement("option");
+                actionIdOption.setAttribute("name", "actionId");
+                actionIdOption.setAttribute("value", actionId);
+                instructionElement.appendChild(actionIdOption);
+            }
+            
+            // Check if content option exists, if not create it
+            boolean hasContent = false;
+            for (int i = 0; i < optionNodes.getLength(); i++) {
+                Element optionElement = (Element) optionNodes.item(i);
+                if (optionElement.getAttribute("name").equals("content")) {
+                    hasContent = true;
+                    break;
+                }
+            }
+            
+            if (!hasContent) {
                 Element contentOption = document.createElement("option");
                 contentOption.setAttribute("name", "content");
                 contentOption.setAttribute("value", content);
@@ -306,6 +335,7 @@ public class ImportSettings extends AnAction {
             }
         }
     }
+}
 
     /**
      * Creates a new entry in the map
@@ -328,7 +358,13 @@ public class ImportSettings extends AnAction {
         // Create instruction
         Element instructionElement = document.createElement("AIAssistantStoredInstruction");
         valueElement.appendChild(instructionElement);
-        
+
+        // Add actionId option
+        Element actionIdOption = document.createElement("option");
+        actionIdOption.setAttribute("name", "actionId");
+        actionIdOption.setAttribute("value", actionId);
+        instructionElement.appendChild(actionIdOption);
+
         // Add content option
         Element contentOption = document.createElement("option");
         contentOption.setAttribute("name", "content");
