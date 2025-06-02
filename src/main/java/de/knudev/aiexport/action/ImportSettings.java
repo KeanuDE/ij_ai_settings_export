@@ -65,6 +65,10 @@ public class ImportSettings extends AnAction {
         super(text, description, icon);
     }
 
+    public void importOnProjectOpen(Project project) {
+        String result = importInstructions(project);
+    }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         Project currentProject = event.getProject();
